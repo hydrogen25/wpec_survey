@@ -8,8 +8,10 @@ use salvo::prelude::*;
 use tokio::signal;
 
 pub async fn start_api_server() -> Result<()> {
+    // 只需要 host 字段，提前克隆并丢弃 cfg，避免其在异步任务/handler 中被捕获导致非 'static 生命周期问题
     let cfg = get_config();
-    let acceptor = TcpListener::new(cfg.host.clone()).ttl(222).bind().await;
+    let host = cfg.host.clone();
+    let acceptor = TcpListener::new(host).ttl(222).bind().await;
 
     let router = Router::with_path("/survey").post(submit);
     tokio::spawn(async move { Server::new(acceptor).serve(router).await });

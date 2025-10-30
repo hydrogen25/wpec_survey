@@ -1,18 +1,23 @@
 use anyhow::Result;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
+use crate::Structs::Problem;
 use std::fs;
 use std::path::Path;
 use std::sync::OnceLock;
+
 pub static CFG: OnceLock<Config> = OnceLock::new();
 
 pub fn get_config() -> &'static Config {
     CFG.get_or_init(|| Config::load_from_file(Path::new("config.toml")).unwrap())
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     pub host: String,
+    // 在缺失时默认为空向量，避免解析失败
+    #[serde(default)]
+    pub problems: Vec<Problem>,
 }
 
 impl Config {

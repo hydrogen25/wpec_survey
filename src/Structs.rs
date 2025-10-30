@@ -1,42 +1,52 @@
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 
 pub struct SurveyRequest {
     pub code: i32,
     pub message: String,
+    pub start_time: u64,
     pub data: Vec<Problem>,
 }
 
 impl SurveyRequest {
-    pub fn new(code: i32, message: Option<String>, data: Vec<Problem>) -> Self {
+    pub fn new(code: i32, start_time: u64, message: Option<String>, data: Vec<Problem>) -> Self {
         Self {
             code,
             message: message.unwrap_or("none".to_string()),
+            start_time,
             data,
         }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Problem {
     pub id: i32,
-    pub is_optional: bool,
+    pub is_required: bool,
     pub question: String,
-    pub answer: String,
+    pub answer: Option<String>,
+    pub is_ai: Option<bool>,
 }
 
 impl Problem {
-    pub fn new(id: i32, is_optional: bool, question: String, answer: String) -> Self {
+    pub fn new(
+        id: i32,
+        is_required: bool,
+        question: String,
+        answer: Option<String>,
+        is_ai: Option<bool>,
+    ) -> Self {
         Self {
             id,
-            is_optional,
+            is_required,
             question,
-            answer,
+            answer: answer,
+            is_ai: is_ai,
         }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SubmitResponse {
     pub code: i32,
     pub message: String,

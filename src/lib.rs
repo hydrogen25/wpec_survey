@@ -6,3 +6,4 @@ pub mod Config;
 pub mod Db;
 #[allow(non_snake_case)]
 pub mod Structs;
+pub mod tests;
