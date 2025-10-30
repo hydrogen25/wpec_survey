@@ -5,13 +5,16 @@ use anyhow::Result;
 
 use chrono_tz::Asia::Shanghai;
 use salvo::prelude::*;
+use tokio::signal;
 
 pub async fn start_api_server() -> Result<()> {
     let cfg = get_config();
-    let acceptor = TcpListener::new(cfg.host.clone()).ttl(8964).bind().await;
+    let acceptor = TcpListener::new(cfg.host.clone()).ttl(222).bind().await;
 
-    let router = Router::new();
+    let router = Router::with_path("/survey").post(submit);
     tokio::spawn(async move { Server::new(acceptor).serve(router).await });
+    signal::ctrl_c().await.unwrap();
+    println!("收到主线程关闭信号，任务结束");
     Ok(())
 }
 
@@ -35,10 +38,16 @@ async fn submit(req: &mut Request, res: &mut Response) {
     let time_stamp = chrono::Local::now().timestamp();
     let time_human = chrono::Utc::now().with_timezone(&Shanghai).to_string();
     match req.parse_json::<SurveyRequest>().await {
-        Ok(survey) => add_survey_to_csv(client_ip, time_stamp, time_human, survey).await,
+        Ok(survey) => match add_survey_to_csv(client_ip, time_stamp, time_human, survey).await {
+            Ok(_) => {
+                res.render(Json(SubmitResponse::new(200, None)));
+            }
+            Err(_) => {
+                res.render(Json(SubmitResponse::new(500, None)));
+            }
+        },
         Err(_) => {
-            res.render(Json(SubmitResponse::new(500, None)));
+            res.render(Json(SubmitResponse::new(400, None)));
         }
-    };
-    res.render(Json(SubmitResponse::new(500, None)));
+    }
 }
