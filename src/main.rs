@@ -1,5 +1,9 @@
-mod ApiServer;
+use anyhow::Ok;
+use server::ApiServer::start_api_server;
 
-fn main() {
-    println!("Hello, world!");
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    start_api_server().await?;
+
+    Ok(())
 }
