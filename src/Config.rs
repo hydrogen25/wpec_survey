@@ -15,7 +15,8 @@ pub fn get_config() -> &'static Config {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     pub host: String,
-    // 在缺失时默认为空向量，避免解析失败
+    pub data_position: Option<String>,
+    pub api_address: String,
     #[serde(default)]
     pub problems: Vec<Problem>,
 }

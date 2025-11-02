@@ -3830,9 +3830,21 @@ version = "0.84.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44fde3137cad708fa63089a3fe789aa4b864c88608d77067547355c78b5bef5b"
 dependencies = [
+ "salvo-cors",
  "salvo-jwt-auth",
  "salvo-proxy",
  "salvo_core",
+]
+
+[[package]]
+name = "salvo-cors"
+version = "0.84.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b92dbfee9271868e86b70b2b11c59bcf773aae91339bc9baec913f31cb3ccc0b"
+dependencies = [
+ "bytes",
+ "salvo_core",
+ "tracing",
 ]
 
 [[package]]
@@ -4164,6 +4176,7 @@ dependencies = [
  "matrix-sdk",
  "salvo",
  "serde",
+ "serde_json",
  "tokio",
  "toml 0.9.8",
 ]

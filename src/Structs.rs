@@ -1,21 +1,13 @@
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
-
 pub struct SurveyRequest {
-    pub code: i32,
-    pub message: String,
     pub start_time: u64,
     pub data: Vec<Problem>,
 }
 
 impl SurveyRequest {
-    pub fn new(code: i32, start_time: u64, message: Option<String>, data: Vec<Problem>) -> Self {
-        Self {
-            code,
-            message: message.unwrap_or("none".to_string()),
-            start_time,
-            data,
-        }
+    pub fn new(start_time: u64, data: Vec<Problem>) -> Self {
+        Self { start_time, data }
     }
 }
 
@@ -25,6 +17,7 @@ pub struct Problem {
     pub is_required: bool,
     pub question: String,
     pub answer: Option<String>,
+    #[serde(default)]
     pub is_ai: Option<bool>,
 }
 

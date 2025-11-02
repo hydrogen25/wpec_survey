@@ -1,18 +1,39 @@
-use anyhow::Result;
-use tokio::fs::OpenOptions;
+use anyhow::{Ok, Result};
+use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 
 use crate::{Config::get_config, Structs::SurveyRequest};
 
-pub async fn add_survey_to_csv(
+pub async fn init() -> Result<()> {
+    tokio::try_join!(init_csv(), init_json())?;
+    Ok(())
+}
+
+pub async fn new_survey(
     client_ip: String,
     time_stamp: i64,
     time_human: String,
     data: SurveyRequest,
 ) -> Result<()> {
+    tokio::try_join!(
+        add_survey_to_csv(client_ip, time_stamp, time_human, data.clone()),
+        add_survey_to_json(serde_json::to_value(data)?)
+    )?;
+
+    Ok(())
+}
+
+async fn add_survey_to_csv(
+    client_ip: String,
+    time_stamp: i64,
+    time_human: String,
+    data: SurveyRequest,
+) -> Result<()> {
+    let cfg = get_config();
+    let posi: String = cfg.data_position.clone().unwrap_or("./".to_string());
     let file = OpenOptions::new()
         .create(true)
         .append(true)
-        .open("data.csv")
+        .open(format!("{posi}/data.csv"))
         .await
         .expect("打开 data.csv 失败");
     let mut writer = csv_async::AsyncWriter::from_writer(file);
@@ -32,15 +53,16 @@ pub async fn add_survey_to_csv(
     writer.flush().await?;
     Ok(())
 }
-
-pub async fn init_csv() -> Result<()> {
+async fn init_csv() -> Result<()> {
     //如果不存在data.csv就自动建表
-    if !std::path::Path::new("data.csv").exists() {
-        std::fs::File::create("data.csv")?;
+    let cfg = get_config();
+    let posi: String = cfg.data_position.clone().unwrap_or("./".to_string());
+    if !std::path::Path::new(&format!("{}/data.csv", posi)).exists() {
+        std::fs::File::create(format!("{posi}/data.csv"))?;
         let file = OpenOptions::new()
             .create(true)
             .write(true)
-            .open("data.csv")
+            .open(format!("{posi}/data.csv"))
             .await?;
         let mut writer = csv_async::AsyncWriter::from_writer(file);
         let cfg = get_config();
@@ -68,5 +90,36 @@ pub async fn init_csv() -> Result<()> {
         writer.flush().await?;
     }
 
+    Ok(())
+}
+
+async fn init_json() -> Result<()> {
+    let cfg = get_config();
+
+    let posi: String = cfg.data_position.clone().unwrap_or("./".to_string());
+    if !std::path::Path::exists(std::path::Path::new(&format!("{posi}/data.json"))) {
+        std::fs::File::create(format!("{posi}/data.json"))?;
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(format!("{posi}/data.json"))
+            .await?;
+    }
+
+    Ok(())
+}
+
+async fn add_survey_to_json(json: serde_json::Value) -> Result<()> {
+    let cfg = get_config();
+    let posi: String = cfg.data_position.clone().unwrap_or("./".to_string());
+    let mut file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(true)
+        .open(format!("{posi}/data.json"))
+        .await?;
+
+    file.write_all(format!("{},\n", json).as_bytes()).await?;
+    file.flush().await?;
     Ok(())
 }
