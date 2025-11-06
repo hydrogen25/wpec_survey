@@ -1,4 +1,5 @@
 use anyhow::{Ok, Result};
+use logs::warn;
 use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 
 use crate::{Config::get_config, Structs::SurveyRequest};
@@ -14,10 +15,16 @@ pub async fn new_survey(
     time_human: String,
     data: SurveyRequest,
 ) -> Result<()> {
-    tokio::try_join!(
-        add_survey_to_csv(client_ip, time_stamp, time_human, data.clone()),
-        add_survey_to_json(serde_json::to_value(data)?)
-    )?;
+    let re = tokio::spawn(async move {
+        let _ = tokio::try_join!(
+            add_survey_to_csv(client_ip, time_stamp, time_human, data.clone()),
+            add_survey_to_json(serde_json::to_value(data).unwrap())
+        );
+    })
+    .await;
+    if let Err(e) = re {
+        warn!("{:#?}", e);
+    }
 
     Ok(())
 }

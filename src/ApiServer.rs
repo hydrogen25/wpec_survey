@@ -49,7 +49,7 @@ async fn submit(req: &mut Request, res: &mut Response) {
     let client_ip = ip_from_xff.or(ip_from_xreal).unwrap_or(ip_from_remote);
     let time_stamp = chrono::Local::now().timestamp();
     let time_human = chrono::Utc::now().with_timezone(&Shanghai).to_string();
-    dbg!(req.parse_json::<SurveyRequest>().await.unwrap());
+    //dbg!(req.parse_json::<SurveyRequest>().await.unwrap());
     match req.parse_json::<SurveyRequest>().await {
         Ok(survey) => match new_survey(client_ip, time_stamp, time_human, survey).await {
             Ok(_) => {
