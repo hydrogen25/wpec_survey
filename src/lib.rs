@@ -1,3 +1,8 @@
+use std::sync::Arc;
+use std::sync::RwLock;
+use tokio::sync::OnceCell;
+
+use crate::Sender::BotSender;
 #[allow(non_snake_case)]
 pub mod ApiServer;
 #[allow(non_snake_case)]
@@ -8,8 +13,8 @@ pub mod Db;
 pub mod Structs;
 pub mod tests;
 
-#[allow(non_snake_case)]
-pub mod MatrixBot;
-
+pub mod bots;
+pub use bots::MatrixBot;
+pub use bots::TgBot;
 #[allow(non_snake_case)]
 pub mod Sender;
