@@ -1,8 +1,14 @@
+use std::{net::IpAddr, path::Path};
+
 use anyhow::{Ok, Result};
-use logs::warn;
+use dashmap::DashSet;
 use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 
-use crate::{Config::get_config, Structs::SurveyRequest};
+use crate::{
+    Config::get_config,
+    Sender::{fmt_survey, send_all},
+    Structs::SurveyRequest,
+};
 
 pub async fn init() -> Result<()> {
     tokio::try_join!(init_csv(), init_json())?;
@@ -15,16 +21,20 @@ pub async fn new_survey(
     time_human: String,
     data: SurveyRequest,
 ) -> Result<()> {
+    let move_c = data.clone();
     let re = tokio::spawn(async move {
-        let _ = tokio::try_join!(
-            add_survey_to_csv(client_ip, time_stamp, time_human, data.clone()),
-            add_survey_to_json(serde_json::to_value(data).unwrap())
-        );
+        tokio::try_join!(
+            add_survey_to_csv(client_ip, time_stamp, time_human, move_c.clone()),
+            add_survey_to_json(serde_json::to_value(move_c.clone()).unwrap()),
+        )
+        .unwrap()
     })
     .await;
     if let Err(e) = re {
-        warn!("{:#?}", e);
+        log::error!("{:#?}", e);
     }
+    let msg = data;
+    send_all(format!("{:#?}", fmt_survey(msg))).await;
 
     Ok(())
 }
